@@ -1,19 +1,23 @@
 const router = require('express').Router()
-
 const md = require('./accounts-middleware')
 const Account = require('./accounts-model')
 
 router.get('/', async (req, res, next) => {
   try{
     const accounts = await Account.getAll()
-    res.json(accounts)
+    res.status(200).json(accounts)
   } catch (err){
     next(err)
   }
 })
 
 router.get('/:id', md.checkAccountId,  async (req, res, next) => {
- res.json(req.account)
+try{
+  const account = await Account.getById(req.params.id)
+  res.status(200).json(account)
+} catch (err) {
+  next(err)
+}
 })
 
 
@@ -21,10 +25,13 @@ router.post(
   '/',
  md.checkAccountPayload, 
  md.checkAccountNameUnique, 
- (req, res, next) => {
-  // DO YOUR MAGIC
+ async (req, res, next) => {
   try{
-    res.json('post account')
+    const newAccount = await Account.create({
+      name : req.body.name.trim(), 
+      budget: req.body.budget,
+    })
+    res.status(201).json(newAccount)
   } catch (err){
     next(err)
   }
@@ -33,23 +40,25 @@ router.post(
 
 router.put(
   '/:id', 
-  md.checkAccountId, 
-  md.checkAccountNameUnique, 
-  md.checkAccountPayload, (req, res, next) => {
-  // DO YOUR MAGIC
+  md.checkAccountId,  
+  md.checkAccountPayload, async (req, res, next) => {
+    const { id } = req.params
+    const { name, budget } = req.body
+    try {
+      const updatedAccount = await Account
+        .updateById(id, { name: name.trim(), budget })
+      res.status(200).json(updatedAccount)
+    } catch (err) {
+      next(err)
+    }
+  })
+  
+
+router.delete('/:id', md.checkAccountId,  async (req, res, next) => {
+ 
   try{
-    res.json('update account')
-
-  } catch (err){
-    next(err)
-  }
-})
-
-router.delete('/:id', md.checkAccountId, (req, res, next) => {
-  // DO YOUR MAGIC
-  try{
-    res.json('delete account')
-
+    await Account.deleteById(req.params.id)
+    res.syayus(200).json(req.account)
   } catch (err){
     next(err)
   }
